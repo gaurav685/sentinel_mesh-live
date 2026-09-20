@@ -1,0 +1,26 @@
+{
+  "model_version": "nsl-kdd-v1",
+  "method": "isolation_forest",
+  "feature_names": [
+    "bytes_sent_log",
+    "bytes_received_log",
+    "packets_total_log",
+    "dst_port",
+    "dst_port_is_system",
+    "dst_port_is_ephemeral",
+    "proto_tcp",
+    "direction_outbound"
+  ],
+  "feature_schema_version": "1",
+  "score_min": 0.399581929174285,
+  "score_max": 0.7631395611829699,
+  "threshold": 0.6184919542498074,
+  "task": "anomaly_score",
+  "trained_on": {
+    "dataset": "NSL-KDD (public)",
+    "file": "C:/Sentinel_Mesh/archive/KDDTrain+.txt",
+    "row_count": 125973,
+    "trained_at": "2026-09-16T16:50:44.752028+00:00"
+  },
+  "known_limitations": "NSL-KDD provides no dst_port, packet counts, or direction -- those 5 of 8 feature dimensions are constant zero in this training set and at inference time for data replayed from it."
+}

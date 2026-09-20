@@ -1,0 +1,18 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30
+sqlalchemy>=2,<3
+asyncpg>=0.29        # production (Postgres/AuraDB-compatible Postgres); sqlite+aiosqlite is used for tests/dev instead
+aiosqlite>=0.20
+pydantic>=2,<3
+pydantic-settings>=2
+chromadb>=1.5,<2
+apscheduler>=3.10,<4
+redis>=5,<6
+scikit-learn==1.9.1  # pinned exact: must match the trained isolation-forest artifact's training version (ml/artifacts/.../metadata.json), not just "compatible enough" -- see app/detection/model.py
+joblib>=1.3
+numpy>=1.26
+httpx>=0.27          # ASGI test client for routes.py, AND app/chat/query.py's LLM HTTP client at runtime
+
+# tests
+pytest>=8
+pytest-asyncio>=0.24

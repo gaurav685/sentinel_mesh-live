@@ -1,0 +1,117 @@
+# Production-like local deployment (Phase 11). Mirrors the free-tier
+# deployment shape (Phase 12): Postgres and Redis run as containers here
+# for a self-contained local stack, but a real hosted deployment points
+# SML_DATABASE_URL/SML_REDIS_URL at managed services instead -- nothing in
+# app/ cares which. AuraDB (graph) and the LLM endpoint are external,
+# configurable services, never containerized here (README: "Store
+# substitutions" -- no graph store is actually wired into this project
+# today, see docs/DEPLOYMENT_AUDIT.md).
+#
+# `replay` never starts automatically (Phase 11 rule): it's in the "tools"
+# profile, which `docker compose up`/`up -d` never activates, and has no
+# `restart` policy. Run it on demand:
+#   docker compose -f docker-compose.prod.yml --profile tools run --rm replay \
+#     --file /data/host/demo_replay.txt --limit 200
+
+name: sentinelmesh-live
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sentinelmesh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-sentinelmesh_live}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sentinelmesh}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [sentinelmesh]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [sentinelmesh]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SML_ENVIRONMENT: production
+      SML_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-sentinelmesh}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sentinelmesh_live}
+      SML_REDIS_URL: redis://redis:6379
+      SML_CHROMA_PERSIST_DIR: /app/data/chroma
+      SML_CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      SML_LLM_API_BASE: ${SML_LLM_API_BASE:-https://api.openai.com/v1}
+      SML_LLM_API_KEY: ${SML_LLM_API_KEY:?set SML_LLM_API_KEY in .env}
+      SML_LLM_MODEL: ${SML_LLM_MODEL:-gpt-4o-mini}
+    volumes:
+      - chroma_data:/app/data/chroma
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/live', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [sentinelmesh]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+        NEXT_PUBLIC_DEMO_TENANT_ID: ${NEXT_PUBLIC_DEMO_TENANT_ID:-00000000-0000-0000-0000-000000000001}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks: [sentinelmesh]
+
+  replay:
+    build:
+      context: .
+      dockerfile: Dockerfile.replay
+    # No `restart` policy, deliberately: this is a one-shot job invoked
+    # with `docker compose run`, never started by `up`/`up -d` (Phase 11).
+    profiles: ["tools"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      SML_REDIS_URL: redis://redis:6379
+    volumes:
+      - ./:/data/host:ro
+    networks: [sentinelmesh]
+
+networks:
+  sentinelmesh:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:

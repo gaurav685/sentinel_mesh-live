@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* Fixed dark SOC-dashboard palette -- deliberately not theme-adaptive.
+   A dashboard product (Datadog/Grafana-class) commits to one look; it
+   doesn't follow the OS light/dark toggle the way a document would. */
+:root {
+  --bg: #0a0e14;
+  --bg-elevated: #10161f;
+  --bg-panel: #131a25;
+  --border: #1f2937;
+  --border-subtle: #182231;
+  --text: #e6edf3;
+  --text-muted: #8b98a9;
+  --text-dim: #5b6b7f;
+  --accent: #22d3ee;
+  --accent-dim: #0e7490;
+  --accent-glow: rgba(34, 211, 238, 0.25);
+
+  /* Status palette, validated with the dataviz skill's script
+     (node scripts/validate_palette.js) rather than eyeballed. Original
+     set failed the normal-vision separation check between medium/high
+     (deltaE 14.6, below the 15 floor -- genuinely hard to tell apart);
+     this set passes with deltaE 16.3. Kept as bare status colors, not
+     categorical chart marks -- every use pairs a dot with an icon/text
+     label (SeverityBadge), never color alone, per the skill's status-
+     palette rule. */
+  --severity-critical: #e11d48;
+  --severity-high: #f97316;
+  --severity-medium: #facc15;
+  --severity-info: #94a3b8;
+  --severity-linked: #a78bfa;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-panel: var(--bg-panel);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-dim: var(--text-dim);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-high: var(--severity-high);
+  --color-severity-medium: var(--severity-medium);
+  --color-severity-info: var(--severity-info);
+  --color-severity-linked: var(--severity-linked);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--accent-glow);
+  color: var(--text);
+}
+
+/* Subtle scrollbar, matches dashboard-product chrome */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+.mono-tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}

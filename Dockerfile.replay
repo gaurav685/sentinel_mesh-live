@@ -1,0 +1,25 @@
+# `replay` image -- same dependency set as the `api` image (Dockerfile),
+# different entry point. Kept as its own image, not merged into `api` or
+# the frontend (Phase 10/11 rule): this is a one-shot/on-demand job, run
+# manually or via a scheduled task, never started automatically alongside
+# `api`.
+
+FROM python:3.11-slim
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app ./app
+COPY replay ./replay
+
+RUN addgroup --system --gid 1001 sentinelmesh && \
+    adduser --system --uid 1001 --gid 1001 --no-create-home sentinelmesh
+USER sentinelmesh
+
+# No default --file: this only runs when explicitly given a real NSL-KDD
+# file to replay (Phase 11: never auto-runs on its own).
+ENTRYPOINT ["python", "-m", "replay.main"]
