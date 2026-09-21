@@ -12,3 +12,4 @@ frontend/tsconfig.tsbuildinfo
 
 *.log
 *.pid
+.neon

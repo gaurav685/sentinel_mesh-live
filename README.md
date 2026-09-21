@@ -29,14 +29,35 @@ deployable-lite subset, re-architected for a free-tier host (Railway/Render).
 Every substitution below is a real trade-off, stated plainly rather than
 hidden behind "the demo works."
 
+## Live Demo
+
+**Frontend:** https://sentinel-mesh-live.vercel.app
+**API:** https://sentinel-mesh-live.onrender.com (`/health`, `/ready`)
+
+Hosted on free tiers — Vercel (frontend), Render (API), Neon (Postgres),
+Upstash (Redis), Groq (LLM). The API cold-starts after ~15 minutes idle
+(Render free tier); the first request after that will be slow.
+
+This live demo is the **deployable-lite subset** described in this README —
+one real detection pattern, end to end. It is **not** the full 20-service
+SentinelMesh architecture; see "What this is not" below for that
+distinction, and `sentinelmesh` (the separate, full repo) for the real
+multi-service system.
+
+To generate fresh detections yourself, run a controlled real-NSL-KDD replay
+against the live backend (see `docs/PUBLIC_DEPLOYMENT.md` for the exact
+command), then reload the dashboard.
+
 ## Deployment
 
-**Status: self-hosted via Docker Compose, no public URL.** A hosted
-(Railway/Render/Vercel-style) deployment was deliberately not created during
-the deployment-hardening pass that produced this section — see
-`docs/DEPLOYMENT.md` for the reasoning and the exact tradeoffs of that
-choice. `docs/DEPLOYMENT_AUDIT.md` and `docs/DEPLOYMENT_CONTRACT.md`
-document the full audit and service contract behind every choice below.
+**Status: publicly deployed** — see "Live Demo" above for the real URLs and
+`docs/PUBLIC_DEPLOYMENT.md` for the full architecture, providers, and
+troubleshooting. This section documents the separate, self-hosted
+Docker Compose path (useful for local development, or for self-hosting
+instead of the free-tier providers above) — see `docs/DEPLOYMENT.md` for
+that path's own reasoning and tradeoffs. `docs/DEPLOYMENT_AUDIT.md` and
+`docs/DEPLOYMENT_CONTRACT.md` document the full audit and service contract
+behind every deployment choice in this project.
 
 ### Architecture
 
